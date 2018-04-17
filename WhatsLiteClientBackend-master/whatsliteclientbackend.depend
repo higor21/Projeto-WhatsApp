@@ -1,0 +1,106 @@
+# depslib dependency file v1.0
+1481042732 source:c:\users\suporte\desktop\whatsliteclientbackend-master\main.cpp
+	"ClientBackend.h"
+	<windows.h>
+
+1480969390 c:\users\suporte\desktop\whatsliteclientbackend-master\include\clientbackend.h
+	"helpers.h"
+
+1480969390 c:\users\suporte\desktop\whatsliteclientbackend-master\include\helpers.h
+	<iostream>
+	<vector>
+	<list>
+	"winsocket.h"
+	<map>
+	<thread>
+	<algorithm>
+	<queue>
+	<chrono>
+	<mutex>
+
+1480969390 c:\users\suporte\desktop\whatsliteclientbackend-master\include\winsocket.h
+	<iostream>
+	<cstdlib>
+	<winsock2.h>
+	<ws2tcpip.h>
+
+1480969390 source:c:\users\suporte\desktop\whatsliteclientbackend-master\src\clientbackend.cpp
+	"ClientBackend.h"
+
+1480969390 source:c:\users\suporte\desktop\whatsliteclientbackend-master\src\helpers.cpp
+	"helpers.h"
+
+1480969390 source:c:\users\suporte\desktop\whatsliteclientbackend-master\src\winsocket.cpp
+	<iostream>
+	"winsocket.h"
+
+1481042732 source:c:\users\suporte\desktop\trabalho\whatsliteclientbackend-master\main.cpp
+	"ClientBackend.h"
+	<windows.h>
+
+1480969390 c:\users\suporte\desktop\trabalho\whatsliteclientbackend-master\include\clientbackend.h
+	"helpers.h"
+
+1480969390 c:\users\suporte\desktop\trabalho\whatsliteclientbackend-master\include\helpers.h
+	<iostream>
+	<vector>
+	<list>
+	"winsocket.h"
+	<map>
+	<thread>
+	<algorithm>
+	<queue>
+	<chrono>
+	<mutex>
+
+1480969390 c:\users\suporte\desktop\trabalho\whatsliteclientbackend-master\include\winsocket.h
+	<iostream>
+	<cstdlib>
+	<winsock2.h>
+	<ws2tcpip.h>
+
+1480969390 source:c:\users\suporte\desktop\trabalho\whatsliteclientbackend-master\src\clientbackend.cpp
+	"ClientBackend.h"
+
+1480969390 source:c:\users\suporte\desktop\trabalho\whatsliteclientbackend-master\src\helpers.cpp
+	"helpers.h"
+
+1480969390 source:c:\users\suporte\desktop\trabalho\whatsliteclientbackend-master\src\winsocket.cpp
+	<iostream>
+	"winsocket.h"
+
+1481025550 source:c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteclientbackend-master\main.cpp
+	"ClientBackend.h"
+	<windows.h>
+
+1481025554 c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteclientbackend-master\include\clientbackend.h
+	"helpers.h"
+
+1481025554 c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteclientbackend-master\include\helpers.h
+	<iostream>
+	<vector>
+	<list>
+	"winsocket.h"
+	<map>
+	<thread>
+	<algorithm>
+	<queue>
+	<chrono>
+	<mutex>
+
+1481025554 c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteclientbackend-master\include\winsocket.h
+	<iostream>
+	<cstdlib>
+	<winsock2.h>
+	<ws2tcpip.h>
+
+1481025550 source:c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteclientbackend-master\src\clientbackend.cpp
+	"ClientBackend.h"
+
+1481025550 source:c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteclientbackend-master\src\helpers.cpp
+	"helpers.h"
+
+1481025550 source:c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteclientbackend-master\src\winsocket.cpp
+	<iostream>
+	"winsocket.h"
+

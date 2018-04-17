@@ -1,0 +1,71 @@
+# depslib dependency file v1.0
+1481042249 source:c:\users\suporte\downloads\whatsliteserver-master\whatsliteserver-master\main.cpp
+	"helpers.h"
+	"conf.h"
+	<fstream>
+	<sstream>
+	<winsock2.h>
+	<ws2tcpip.h>
+
+1481042160 c:\users\suporte\downloads\whatsliteserver-master\whatsliteserver-master\include\helpers.h
+	<iostream>
+	<vector>
+	<list>
+	"winsocket.h"
+	<map>
+	<thread>
+	<algorithm>
+	<queue>
+	<chrono>
+	<mutex>
+
+1480969310 c:\users\suporte\downloads\whatsliteserver-master\whatsliteserver-master\include\winsocket.h
+	<iostream>
+	<cstdlib>
+	<winsock2.h>
+	<ws2tcpip.h>
+
+1480969310 c:\users\suporte\downloads\whatsliteserver-master\whatsliteserver-master\include\conf.h
+
+1481042280 source:c:\users\suporte\downloads\whatsliteserver-master\whatsliteserver-master\src\helpers.cpp
+	"helpers.h"
+
+1480969310 source:c:\users\suporte\downloads\whatsliteserver-master\whatsliteserver-master\src\winsocket.cpp
+	<iostream>
+	"winsocket.h"
+
+1481025560 source:c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteserver-master\main.cpp
+	"helpers.h"
+	"conf.h"
+	<fstream>
+	<sstream>
+	<winsock2.h>
+	<ws2tcpip.h>
+
+1481025564 c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteserver-master\include\helpers.h
+	<iostream>
+	<vector>
+	<list>
+	"winsocket.h"
+	<map>
+	<thread>
+	<algorithm>
+	<queue>
+	<chrono>
+	<mutex>
+
+1481025564 c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteserver-master\include\winsocket.h
+	<iostream>
+	<cstdlib>
+	<winsock2.h>
+	<ws2tcpip.h>
+
+1481025564 c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteserver-master\include\conf.h
+
+1481025560 source:c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteserver-master\src\helpers.cpp
+	"helpers.h"
+
+1481025564 source:c:\users\higor felype\onedrive\ect\2016.2\paradigmas de programação\unid 03\whatsliteserver-master\src\winsocket.cpp
+	<iostream>
+	"winsocket.h"
+
