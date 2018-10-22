@@ -12,18 +12,28 @@ serverSocket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
 #Vincula o socket com a porta
 serverSocket.bind((serverName,serverPort))
 
-serverSocket.listen(1)
+serverSocket.listen(100)
 print('The server has started... \n')
 
-def nick_name(cliCon)
-    """Função para definir o nick name do cliente"""
 
-    print("Por favor, informe seu nickname: ")
+listClients = {}
+
+"""Função para definir o nick name do cliente"""
+def nick_name(cliCon)
+    # requisita o nick_name do novo cliente
+    cliCon.send(raw_input("Por favor, informe seu nickname: "))
+    # nick_name digitado pelo cliente
     nick = cliCon.recv(1024).decode('utf-8')
-    return nick
+    
 
 def chat(cliCon,cliAddr):
-    """Função para gerenciar o bate papo do cliente"""
+    ''' verifica se o cliente já existe: 
+        * caso exista: continua o programa
+        * caso contrário: pergunta o nick_name para o usuário
+    '''
+    if(cliAddr not in listClients)
+        listClients[cliAddr] = nick_name(cliCon)
+
 
     message = cliCon.recv(1024).decode('utf-8')
     print('Client escreveu: \n', message)
@@ -34,6 +44,7 @@ while 1:
     # cliAddr é o endereço do cliente que acabou de se conectar
     cliCon, cliAddr = serverSocket.accept()
 
-    tNickName = threading.Thread(target=nick_name, args=(cliCon))
-    tNickName.start()
-    print()
+    # inicia um novo chat para o cliente
+    threading.Thread(target=chat, args=(cliCon, cliAddr)).start()
+
+    
