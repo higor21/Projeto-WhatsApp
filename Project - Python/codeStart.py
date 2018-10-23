@@ -35,16 +35,22 @@ class Message:
 ''' FALTA FAZER O USUÁRIO '''
 class User:
     # construtor
-    def __init__(self, cliCon, nickname, disp = False, isLogged = True):
-        pass
+    def __init__(self, cliCon, nickname, disp = False, isLogged = True, listM = []):
+        self.cliCon, self.nickname = cliCon, nickname
+        self.disp, self.isLogged = disp, isLogged
+        self.listMessages = listM # lista de mensagens do cliente (caso ele acabe de entrar e já tenha mensagens para o mesmo)
+    
+    def __str__(self)
+        return 'nickname: ' + self.nickname + ' - estado: ' + \
+        (('logado' + (' - lugar: privado' if self.disp else ' - lugar: chat público')) if self.isLogged else 'deslogado')
+        
 
 class Chat(Thread):
     # construtor
-    def __init__(self, cliCon, cliAddr, listM = ()):
+    def __init__(self, cliCon, cliAddr):
         Thread.__init__(self)
         self.cliCon = cliCon
         self.cliAddr = cliAddr
-        self.listMessages = listM # lista de mensagens do cliente (caso ele acabe de entrar e já tenha mensagens para o mesmo)
         if(cliAddr not in listClients):
             cliCon.sendto("Por favor, informe seu nickname: ", cliAddr)
             nick = cliCon.recv(1024).decode('utf-8')
@@ -55,12 +61,22 @@ class Chat(Thread):
         else: 
             listClients[cliAddr].isLogged = True
             listClients[cliAddr].cliCon = cliCon
-        self.sendData(listClients[cliAddr].nickname + ' entrou...')
+            if listClients[cliAddr].listMessages : # caso tenha mensagens nova para o usuário, envia as mensagens para o mesmo
+                self.sendMsg(listClients[cliAddr], listClients[cliAddr].listMessages)
+        self.sendMsg(listClients[cliAddr].nickname + ' entrou...') # LEMBRAR DE FORMULAR MENSAGEM AQUI (E NOS OUTROS CANTOS TAMBÉM)
         Thread(target=self.receiveData).start() # espera por mensagem do usuário 
 
-    def sendData(self, msg = ''): # 'msg' representa a mensagem 'nick-name entrou...'
-        if msg != '':
-            pass # AINDA FALTA FAZER 
+    def sendMsg(self, user, msg):
+        if type(msg) is not list: # verifica se há uma lista de mensagens
+            msg = [msg]
+        if user.isLogged: 
+            map(lambda x: self.cliCon.sendto(x, user.cliAddr), msg) # TESTAR SE ISSO FUNCIONA (acho que é necessário um 'for')
+        else 
+            user.listMessages += msg
+    
+    def sendMsgToAll(self, msg):
+        for C in listClients:
+            self.sendMsg(C,msg)
         
     def receiveData(self):
         while(True):
@@ -78,20 +94,19 @@ class Chat(Thread):
                     '''
             elif cmd.startswith('nome(') and cmd.endswith(')'): # verifica se o comando é nome(*)
                 new_nickname = message.nickname[len('nome('):len(message.nickname)-1]
-                self.sendData(listClients[message.ip_o].nickname + ' agora é ' + new_nickname)
+                self.sendMsg(listClients[message.ip_o].nickname + ' agora é ' + new_nickname)
                 listClients[message.ip_o].nickname = message.nickname[len('nome('):len(message.nickname)-1]
                 
             elif cmd == 'sair()': 
                 listClients[message.ip_o].isLogged = False
-                self.sendData(listClients[message.ip_o].nickname + 'saiu!')
+                self.sendMsg(listClients[message.ip_o].nickname + 'saiu!')
                 self.cliCon.close()
                 break
             else:
-                self.sendData('comando inválido!\n')
+                self.sendMsg('comando inválido!\n')
 
 while 1:
     cliCon, cliAddr = serverSocket.accept()
-    print "dafdf"
     Chat(cliCon, cliAddr).start()
 
     
