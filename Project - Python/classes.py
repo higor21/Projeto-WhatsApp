@@ -1,5 +1,7 @@
 #coding: utf-8
-import pickle, sys
+
+import sys, pickle
+
 
 class Message:
     # construtor
@@ -13,24 +15,21 @@ class Message:
         return 'orig: ' + self.ip_o + ', dest: ' + self.ip_d + ' -> message:\n\t' + self.msg
 
 class User(object):
-    def __init__(self, cliCon, cliAddr, nickname, disp = False, isLogged = True, listM = []):
-        self.cliCon, self.nickname = cliCon, nickname
+    def __init__(self, cliAddr, nickname, senha, disp = False, isLogged = True, listM = []):
+        self.nickname = nickname
         self.disp, self.isLogged = disp, isLogged
         self.cliAddr = cliAddr
         self.listMessages = listM # lista de mensagens do cliente (caso ele acabe de entrar e já tenha mensagens para o mesmo)
+        self.senha = senha 
     
     def __getstate__(self):
-        print('dfjasldjfçlas')
+        print 'get'
         return self.__dict__
 
     def __setstate__(self, value):
+        print 'set'
         self.__dict__ = value
 
     def __str__(self):
         strPriv = (' - lugar: privado' if self.disp else ' - lugar: chat público')
         return 'nickname: ' + self.nickname + ' - estado: ' + ('logado' if self.isLogged else 'deslogado')
-
-f = User(4,5,'higor')
-f_string = pickle.dumps(f)
-f_new = pickle.loads(f_string)
-print f_new

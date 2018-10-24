@@ -20,88 +20,77 @@
 '''
 
 ''' COMANDOS ADICIONADOS:
-    * enviar(): apenas envia a mensagem. O destino para o qual será enviada depende da variável 'mode' do chat 
+    * enviar(): (client -> server) apenas envia a mensagem. O destino para o qual será enviada depende da variável 'mode' do chat 
+    * mostrar(): (server -> client) pede para que o 'cliente' exiba a mensagem 
 '''
 from socket import *
 from threading import Thread
+import pickle, sys, random
+from classes import *
 
-serverName = '192.168.0.9' #Meu IP atual, deve ser verificado sempre
+serverName = '' #Meu IP atual, deve ser verificado sempre
 serverPort = 12000
 
 serverSocket = socket(AF_INET,SOCK_STREAM)
 serverSocket.setsockopt(SOL_SOCKET,SO_REUSEADDR,1)
 serverSocket.bind((serverName,serverPort))
 
-serverSocket.listen(100)
-print('The server has started... \n')
+serverSocket.listen(1)
 
 # lista de usuário 
 listClients = {}
 
 
-class Message:
-    # construtor
-    def __init__(self, ip_o = '', ip_d = '', nickname = '', command = '', msg = ''):
-        self.ip_o, self.ip_d, self.msg  = ip_o, ip_d, msg
-        self.nickname, self.command,= nickname, command
-        self.size = sys.getsizeof(self) # tamanho da mensagem (incluindo a cabeçalho)
-
-    def __str__(self):
-        # definir melhor depois como será impressa a mensagem ...
-        return 'orig: ' + self.ip_o + ', dest: ' + self.ip_d + ' -> message:\n\t' + self.msg
-
-class User:
-    # construtor
-    def __init__(self, cliCon, nickname, disp = False, isLogged = True, listM = []):
-        self.cliCon, self.nickname = cliCon, nickname
-        self.disp, self.isLogged = disp, isLogged
-        self.listMessages = listM # lista de mensagens do cliente (caso ele acabe de entrar e já tenha mensagens para o mesmo)
-    
-    def __str__(self)
-        return 'nickname: ' + self.nickname + ' - estado: ' + \
-        (('logado' + (' - lugar: privado' if self.disp else ' - lugar: chat público')) if self.isLogged else 'deslogado')
-        
-
 class Chat(Thread):
     # construtor
-    def __init__(self, cliCon, cliAddr, mode = False):
+    def __init__(self, cliCon, cliAddr, nickname, senha, mode = False):
         Thread.__init__(self)
         self.cliCon = cliCon
-        self.cliAddr = cliAddr 
+        self.cliAddr = cliAddr
+        self.nickname = nickname
 
         self.mode = mode # define se o chat atual é público ou privado
         self.friend = None # usuário que representa o colega do chat privado
         
-        if(cliAddr not in listClients):
-            cliCon.sendto("Por favor, informe seu nickname: ", cliAddr)
+        if(nickname not in listClients):
+            cliCon.sendto("Cadastre-se, informe o seu nickname: ", self.cliAddr)
             nick = cliCon.recv(1024).decode('utf-8')
             # 'False' indica que o usuário não está no privado com ninguém 
             # 'True' indica que o usuário está logado
-            listClients[cliAddr] = User(cliCon, nick)
-            print listClients[cliAddr]
+            listClients[nick] = [cliCon, User(cliAddr, nick, senha)]
+            print listClients[nick][1]
         else: 
-            listClients[cliAddr].isLogged = True
-            listClients[cliAddr].cliCon = cliCon
-            if listClients[cliAddr].listMessages : # caso tenha mensagens nova para o usuário, envia as mensagens para o mesmo
-                self.sendMsg(listClients[cliAddr], listClients[cliAddr].listMessages)
-        self.sendMsg(listClients[cliAddr].nickname + ' entrou...') # LEMBRAR DE FORMULAR MENSAGEM AQUI (usar construtor de 'Mensagem')
+            listClients[nickname][1].isLogged = True
+            listClients[nickname][0] = cliCon
+            if listClients[nickname][1].listMessages : # caso tenha mensagens nova para o usuário, envia as mensagens para o mesmo
+                self.sendMsg(listClients[nickname][1], listClients[nickname][1].listMessages)
+        
+        # PERGUNTAR AO PROFESSOR SE SERÁ O 'ServerName' OU O _____não sei kk
+        msg = Message(serverName, self.cliAddr, nickname, 'mostrar()', nickname + ' entrou...')
+
+        self.sendMsg(self.nickname, msg)
         Thread(target=self.receiveData).start() # espera por mensagem do usuário 
 
-    def sendMsg(self, user, msg):
+    def sendMsg(self, name_user, msg):
         if type(msg) is not list: # verifica se há uma lista de mensagens
             msg = [msg]
-        if user.isLogged: 
-            map(lambda x: self.cliCon.sendto(x, user.cliAddr), msg) # TESTAR SE ISSO FUNCIONA (acho que é necessário um 'for')
-        else 
-            user.listMessages += msg
+        if listClients[name_user][1].isLogged:
+
+            #f_string = pickle.dumps(msg)
+            map(lambda x: self.cliCon.sendto(pickle.dumps(msg), listClients[name_user][1].cliAddr), msg)
+            #self.cliCon.sendto(f_string, listClients[name_user][1].cliAddr)
+            #map(lambda x: self.cliCon.sendto(fileObj, user.cliAddr), msg) # TESTAR SE ISSO FUNCIONA (acho que é necessário um 'for')
+        else:
+            listClients[name_user][1].listMessages += msg
     
     def sendMsgToAll(self, msg):
-        for C in listClients:
-            self.sendMsg(C,msg)
+        for nmC in listClients:
+            self.sendMsg(nmC,msg) # SERÁ QUE ESTÁ CERTO?
         
     def receiveData(self):
         while(True):
             message = self.cliCon.recv(1024).decode('utf-8')
+
             cmd = message.command
             print('Client escreveu: \n', message)
 
@@ -114,7 +103,7 @@ class Chat(Thread):
                         pass # retornar mensagem dizendo que o usuário não está disponível
                     elif listClients[message.ip_d].disp : 
                         pass # retornar mensagem informando que o usuário já está no privado
-                    else
+                    else:
                         pass # enviar mensagem 
                     
             elif cmd.startswith('nome(') and cmd.endswith(')'): # verifica se o comando é nome(*)
@@ -142,7 +131,13 @@ class Chat(Thread):
                 self.sendMsg('comando inválido!\n')
 
 while 1:
+    print('The server has started... \n')
     cliCon, cliAddr = serverSocket.accept()
     # False: chat público (padrão)
     # True: chat privado 
-    Chat(cliCon, cliAddr).start()
+    print('... usuário fazendo login ...')
+
+    # FAZER LOGIN DO USUÁRIO AQUI 
+
+    nickname, senha = 'higor' + str(random.choice('asdfghqwerzxcvçlkiuo')), '12345' # para fins de teste
+    Chat(cliCon, cliAddr, nickname, senha).start()
