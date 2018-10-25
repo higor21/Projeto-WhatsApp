@@ -15,9 +15,9 @@ class Message:
         return 'orig: ' + self.ip_o + ', dest: ' + self.ip_d + ' -> message:\n\t' + self.msg
 
 class User(object):
-    def __init__(self, cliAddr, nickname, senha, disp = False, isLogged = True, listM = []):
+    def __init__(self, cliAddr, nickname, senha, isLogged = True, listM = []):
         self.nickname = nickname
-        self.disp, self.isLogged = disp, isLogged
+        self.isLogged = isLogged
         self.cliAddr = cliAddr
         self.listMessages = listM # lista de mensagens do cliente (caso ele acabe de entrar e já tenha mensagens para o mesmo)
         self.senha = senha 
