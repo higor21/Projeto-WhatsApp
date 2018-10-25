@@ -29,6 +29,8 @@ from threading import Thread
 import pickle, sys, random
 from classes import *
 
+# AJEITAR O NEGÓCIO DOS 'friends'
+
 serverName = '' #Meu IP atual, deve ser verificado sempre
 serverPort = 12000
 
@@ -40,18 +42,16 @@ serverSocket.listen(1)
 
 # lista de usuário 
 listClients = {}
-
+# relação de privados
+listPrivates = {}
 
 class Chat(Thread):
     # construtor
-    def __init__(self, cliCon, cliAddr, nickname, senha, mode = False):
+    def __init__(self, cliCon, cliAddr, nickname, senha):
         Thread.__init__(self)
         self.cliCon = cliCon
         self.cliAddr = cliAddr
         self.nickname = nickname
-
-        self.mode = mode # define se o chat atual é público ou privado
-        self.friend = None # usuário que representa o colega do chat privado
         
         if(nickname not in listClients):
             cliCon.sendto("Cadastre-se, informe o seu nickname: ", self.cliAddr)
@@ -70,7 +70,6 @@ class Chat(Thread):
         msg = Message(serverName, self.cliAddr, nickname, 'mostrar()', nickname + ' entrou...')
 
         self.sendMsg(self.nickname, msg)
-        Thread(target=self.receiveData).start() # espera por mensagem do usuário 
 
     def sendMsg(self, name_user, msg):
         if type(msg) is not list: # verifica se há uma lista de mensagens
@@ -88,59 +87,63 @@ class Chat(Thread):
         for nmC in listClients:
             self.sendMsg(nmC,msg) # SERÁ QUE ESTÁ CERTO?
         
-    def receiveData(self):
-        while(True):
-            message = self.cliCon.recv(1024).decode('utf-8')
+    while(True):
+        message = self.cliCon.recv(1024).decode('utf-8')
 
-            cmd = message.command
-            print('Client escreveu: \n', message)
+        cmd = message.command
+        print('Client escreveu: \n', message)
 
-            if cmd == 'lista()':
-                listC = ''
-                keys = list(listClients.keys())
-                for i in range(0, len(listClients)):
-                    # gera cada linha da lista a ser enviado ao usuário
-                    listC += ('<' + keys[i] + ', ' + listClients[keys[i]][1].cliAddr[0] + ', ' + listClients[keys[i]][1].cliAddr[0] + '>\n')
-                self.cliCon.sendto(listC,self.cliAddr)
+        if cmd == 'lista()':
+            listC = ''
+            keys = list(listClients.keys())
+            for i in range(0, len(listClients)):
+                # gera cada linha da lista a ser enviado ao usuário
+                listC += ('<' + keys[i] + ', ' + listClients[keys[i]][1].cliAddr[0] + ', ' + listClients[keys[i]][1].cliAddr[0] + '>\n')
+            self.cliCon.sendto(listC,self.cliAddr)
 
-            # lembrando que para este caso 'message.msg' representa o 'nickname' do usuário que mandou a mensagem
-            elif cmd.startswith('privado(') and cmd.endswith(')'): # verifica se o comando é privado(*) M
-                # verifica se o 'nickname' existe 
-                nick = message.nickname[len('privado('):len(message.nickname)-1]
-                if nick in listClients:
-                    if not listClients[nick][1].isLogged : # usuário de destinho offline
-                        msg = 'mostrar()', 'usuário 'nick + ' está offline!'
-                    elif listClients[nick][1].disp :
-                        msg = 'usuário 'nick + ' já está no privado com outro usuário!'
-                    else:
-                        msg = 'solicitação enviada com sucesso!'
-                        self.sendMsg(nick, Message(serverName, listClients[nick][1].cliAddr, nick, 'requisicao()', 'usuário ' + message.msg + ' solicitando privado'))
-                    # envia mensagem de volva ao usuário solicitante
-                    self.sendMsg(message.msg, Message(serverName, self.cliAddr, nick, 'mostrar()', msg))
-                    
-            elif cmd.startswith('nome(') and cmd.endswith(')'): # verifica se o comando é nome(*)
-                new_nickname = message.nickname[len('nome('):len(message.nickname)-1]
-                self.sendMsg(listClients[message.ip_o].nickname + ' agora é ' + new_nickname)
-                listClients[message.ip_o].nickname = message.nickname[len('nome('):len(message.nickname)-1]
-                
-            elif cmd == 'sair()':
-                if self.mode : # verifica se o chat é privado 
-                    listClients[message.ip_o].disp = False
-                    self.mode = False
-                else :
-                    listClients[message.ip_o].isLogged = False
-                    self.sendMsg(listClients[message.ip_o].nickname + 'saiu!')
-                    self.cliCon.close()
-                    break
-            elif cmd == 'enviar()':
-                if self.mode : # verifica se o chat é privado 
-                    # CONFIGURAR MENSAGEM ANTES DE ENVIAR 
-                    self.sendMsg(listClients[self.cliAddr], message) 
+        # lembrando: que para este caso 'message.nickname' representa o 'nickname' do usuário que mandou a mensagem
+        elif cmd.startswith('privado(') and cmd.endswith(')'): # verifica se o comando é privado(*) M
+            # verifica se o 'nickname' existe 
+            nick = cmd[len('privado('):len(message.nickname)-1]
+            if nick in listClients:
+                if not listClients[nick][1].isLogged : # usuário de destinho offline
+                    msg = 'mostrar()', 'usuário 'nick + ' está offline!'
+                elif listClients[nick][1].friend != '':
+                    msg = 'usuário 'nick + ' já está no privado com outro usuário!'
                 else:
-                    # CONFIGURAR MENSAGEM ANTES DE ENVIAR 
-                    self.sendMsgToAll(message)
+                    msg = 'solicitação enviada com sucesso!'
+                    self.sendMsg(nick, Message(serverName, listClients[nick][1].cliAddr, nick, 'requisicao()', 'usuário ' + message.msg + ' solicitando privado'))
+                # envia mensagem de volva ao usuário solicitante
+                self.sendMsg(message.nickname, Message(serverName, self.cliAddr, nick, 'mostrar()', msg))
+        
+        # para este caso, o 'nickname' enviado é o do próprio usuário, visto que ele quer trocar seu próprio nome
+        elif cmd.startswith('nome(') and cmd.endswith(')'): # verifica se o comando é nome(*)
+            new_nickname = message.nickname[len('nome('):len(message.nickname)-1] # pega o novo 'nickname'
+            msg = message.nickname + ' agora é ' + new_nickname)
+            listClients[new_nickname] = listClients.pop(message.nickname) # trocando o nome do usuário 
+            self.sendMsg(new_nickname, Message(serverName, listClients[new_nickname][1].cliAddr, new_nickname, 'mostrar()', msg))
+        
+        # para este caso, o 'nickname' enviado é o do próprio usuário, visto que ele quer sair da conversa (privada/chat)
+        elif cmd == 'sair()':
+            if self.friend : # verifica se o chat é privado 
+                listClients[message.nickname][1].friend = ''
+                self.friend = False
+                self.sendMsg(self.friend, Message())
+            else :
+                listClients[message.nickname].isLogged = False
+                self.sendMsgToAll(listClients[message.nickname][1].nickname + 'saiu!')
+                listClients[message.nickname][1].cliCon.close()
+                break # sai da Thread
+        elif cmd == 'enviar()':
+            if self.friend : # verifica se o chat é privado 
+                # CONFIGURAR MENSAGEM ANTES DE ENVIAR 
+                self.sendMsg(listClients[self.cliAddr], message) 
             else:
-                self.sendMsg('comando inválido!\n')
+                # CONFIGURAR MENSAGEM ANTES DE ENVIAR 
+                self.sendMsgToAll(message)
+        else:
+            self.sendMsg('comando inválido!\n')
+                
 
 while 1:
     print('The server has started... \n')
