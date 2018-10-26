@@ -12,7 +12,7 @@ class Message:
 
     def __str__(self):
         # definir melhor depois como será impressa a mensagem ...
-        return 'message:\t' + self.msg
+        return 'message:  ' + self.msg
 
 class User(object):
     def __init__(self, cliAddr, nickname, senha, isLogged = True, listM = []):
