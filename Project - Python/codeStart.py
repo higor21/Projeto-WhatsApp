@@ -59,7 +59,7 @@ class Chat(Thread):
             # 'False' indica que o usuário não está no privado com ninguém 
             # 'True' indica que o usuário está logado
             listClients[nick] = [cliCon, User(cliAddr, nick, senha)]
-            print listClients
+            print listClients[nick][1]
         else: 
             listClients[nickname][1].isLogged = True
             listClients[nickname][0] = cliCon
@@ -75,10 +75,11 @@ class Chat(Thread):
     def sendMsg(self, name_user, msg):
         if type(msg) is not list: # verifica se há uma lista de mensagens
             msg = [msg]
+        print(type(msg[0]))
         if listClients[name_user][1].isLogged:
 
             #f_string = pickle.dumps(msg)
-            map(lambda x: self.cliCon.sendto(pickle.dumps(msg), listClients[name_user][1].cliAddr), msg)
+            map(lambda x: self.cliCon.sendto(pickle.dumps(x), listClients[name_user][1].cliAddr), msg)
             #self.cliCon.sendto(f_string, listClients[name_user][1].cliAddr)
             #map(lambda x: self.cliCon.sendto(fileObj, user.cliAddr), msg) # sou gay e gosto de rola  TESTAR SE ISSO FUNCIONA (acho que é necessário um 'for')
         else:
@@ -90,8 +91,8 @@ class Chat(Thread):
         
     def receiveData(self):
         while(True):
-            message = self.cliCon.recv(1024).decode('utf-8')
-
+            message = self.cliCon.recv(1024)
+            message = pickle.loads(message)
             cmd = message.command
             print('Client escreveu: \n', message)
 

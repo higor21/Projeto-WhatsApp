@@ -1,27 +1,26 @@
+#coding: utf-8
 from socket import * 
 from threading import Thread
-import time
+import time, pickle, classes
 
-
-ip_server = '127.0.0.1' # IP of server to connect
+ip_server = '' # IP of server to connect
 serverPort = 12000 # port to connect
 clientSocket = socket(AF_INET, SOCK_STREAM)
-
 clientSocket.connect((ip_server,serverPort))
-
-print 'asdflajdslk'
 
 def getMessage():
 	while 1:
 		message = clientSocket.recv(1024)
-		print "\nMessage received by server: %s" % message
+		print (pickle.loads(message).msg.decode('utf-8'))
 		time.sleep(1) #sleep by 1ms
 
 
 #start here!
-print 'Client started!\n'
+print ('Client started!\n')
 Thread(target=getMessage, args=()).start();
 while 1:
-	sentence = raw_input('Input the command: ')
-	clientSocket.send(sentence)
+	cmd = raw_input('Input the command: ')
+	nick = raw_input('Input the nick: ')
+	msg = raw_input('Input the msg: ')
+	clientSocket.send(pickle.dumps(classes.Message(clientSocket.getsockname(),(ip_server,serverPort),nick,cmd,msg)))
 	

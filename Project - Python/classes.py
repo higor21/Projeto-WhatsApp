@@ -5,14 +5,14 @@ import sys, pickle
 
 class Message:
     # construtor
-    def __init__(self, ip_o = '', ip_d = '', nickname = '', command = '', msg = ''):
-        self.ip_o, self.ip_d, self.msg  = ip_o, ip_d, msg
-        self.nickname, self.command,= nickname, command
+    def __init__(self, ip_src = '', ip_dest = '', nickname = '', command = '', msg = ''):
+        self.ip_src, self.ip_dest, self.msg  = ip_src, ip_dest, msg
+        self.nickname, self.command = nickname, command
         self.size = sys.getsizeof(self) # tamanho da mensagem (incluindo a cabeçalho)
 
     def __str__(self):
         # definir melhor depois como será impressa a mensagem ...
-        return 'orig: ' + self.ip_o + ', dest: ' + self.ip_d + ' -> message:\n\t' + self.msg
+        return 'message:\t' + self.msg
 
 class User(object):
     def __init__(self, cliAddr, nickname, senha, isLogged = True, listM = []):
@@ -31,5 +31,4 @@ class User(object):
         self.__dict__ = value
 
     def __str__(self):
-        strPriv = (' - lugar: privado' if self.disp else ' - lugar: chat público')
         return 'nickname: ' + self.nickname + ' - estado: ' + ('logado' if self.isLogged else 'deslogado')
