@@ -53,7 +53,7 @@ class Chat(Thread):
         self.cliCon = cliCon
         self.cliAddr = cliAddr
         self.nickname = nickname
-
+        print(self.nickname)
         if (nickname not in listClients):
             msg = Message(serverName, self.cliAddr, nickname, 'mostrar()',"Cadastre-se, informe o seu nickname: ")
             cliCon.sendto(pickle.dumps(msg), self.cliAddr)
@@ -66,8 +66,9 @@ class Chat(Thread):
             listClients[self.nickname][1].isLogged = True
             listClients[self.nickname][0] = cliCon
             # caso tenha mensagens nova para o usuário, envia as mensagens para o mesmo
-            if listClients[nickname][1].listMessages:
-                self.sendMsg(nickname, listClients[nickname][1].listMessages)
+            if listClients[self.nickname][1].listMessages:
+                print('----' + self.nickname + '----')
+                map(lambda x: self.sendMsg(self.nickname, x), listClients[self.nickname][1].listMessages)
 
         msg = Message(serverName, self.cliAddr, nickname, 'mostrar()', nickname + ' entrou...')
 
@@ -80,17 +81,17 @@ class Chat(Thread):
         if type(msg) is not list:  # verifica se há uma lista de mensagens
             msg = [msg]
         
-        print(user_name + ' : ' + str(user_name in listClients))
         if user_name in listClients :
             if listClients[user_name][1].isLogged:
                 #Se o cliente está logado, envia as mensagens
                 #pickle.dumps() converte uma mensagem string em bytestream
-
+                print(user_name + ' * ' + str(msg))
                 map(lambda x: listClients[user_name][0].sendto(pickle.dumps(x), listClients[user_name][1].cliAddr), msg)
                 # self.cliCon.sendto(f_string, listClients[user_name][1].cliAddr)
                 # map(lambda x: self.cliCon.sendto(fileObj, user.cliAddr), msg)
             else:
                 #Se o cliente não está logado, acumula as mensagens para enviar quando este logar
+                print(user_name + ' - ' + str(msg))
                 listClients[user_name][1].listMessages += msg
         else : 
             pass # TRATAR ISSO DEPOIS
@@ -98,8 +99,8 @@ class Chat(Thread):
     def sendMsgToAll(self, msg):
         """Função para enviar mensagens para TODOS os usuários"""
         for nmC in listClients:
-
-            self.sendMsg(nmC, msg)
+            if nmC != self.nickname :
+                self.sendMsg(nmC, msg)
 
     def receiveData(self):
         while (True):
@@ -116,7 +117,7 @@ class Chat(Thread):
                     # gera cada linha da lista a ser enviado ao usuário
                     logged_list += ('<' + keys[i] + ', ' + listClients[keys[i]][1].cliAddr[0] + ', ' +
                               listClients[keys[i]][1].cliAddr[0] + '>\n') #Esta é a porta mesmo?
-                msg = Message(serverName, self.cliAddr, nickname, 'mostrar()', logged_list)
+                msg = Message(serverName, self.cliAddr, self.nickname, 'mostrar()', logged_list)
                 self.cliCon.sendto(pickle.dumps(msg), self.cliAddr)
 
             elif cmd.startswith('privado(') and cmd.endswith(')'):  # verifica se o comando é privado(*) M
@@ -131,7 +132,7 @@ class Chat(Thread):
                         msg = 'solicitação enviada com sucesso!'
                         print(nick)
                         self.sendMsg(nick, Message(serverName, listClients[nick][1].cliAddr, nick, 'requisicao()',
-                                                   'usuário ' + message.nickname + ' solicitando privado'))
+                                                   'usuário ' + self.nickname + ' solicitando privado'))
                     # envia mensagem de volta ao usuário solicitante
                     self.sendMsg(self.nickname, Message(serverName, self.cliAddr, self.nickname, 'mostrar()', msg))
 
@@ -195,9 +196,9 @@ class Chat(Thread):
 print('The server has started... \n')
 while 1:
     cliCon, cliAddr = serverSocket.accept()
+    
     print('... usuário fazendo login ...')
-
+    message = pickle.loads(cliCon.recv(1024))
     # FAZER LOGIN DO USUÁRIO AQUI
-
-    nickname, senha = 'higor' + str(random.choice('asdfghqwerzxcvçlkiuo')), '12345' # para fins de teste
-    Chat(cliCon, cliAddr, nickname, senha).start()
+    
+    Chat(cliCon, cliAddr, message.nickname, 'dfsdf').start()
