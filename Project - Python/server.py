@@ -55,6 +55,8 @@ class Access():
         cliCon.sendto(pickle.dumps(msg), cliAddr)
         self.dados = pickle.loads(cliCon.recv(1024)).msg.split('|')
         self.login() if mode == 'L' else self.register() # operador ternário do python
+        if self.dados != None:
+            listClients[self.dados[0]] = [cliCon, User(self.cliAddr, self.dados[0]), self.dados[1]]
 
     def login(self):
         if (self.dados[0] not in listClients or listClients[self.dados[0]][2] != self.dados[1]):
@@ -84,16 +86,18 @@ class Chat(Thread):
         """Construtor"""
         Thread.__init__(self)
         self.cliCon, self.cliAddr, self.nickname = cliCon, cliAddr, nickname
-
+        print('dfasdfasdf1')
         listClients[self.nickname][1].isLogged = True
         listClients[self.nickname][0] = cliCon
         # caso tenha mensagens nova para o usuário, envia as mensagens para o mesmo
         if listClients[self.nickname][1].listMessages:
             map(lambda x: self.sendMsg(self.nickname, x), listClients[self.nickname][1].listMessages)
-
+        print('dfasdfasdf2')
         # avisa que o usuároi 'nickname' entrou para todas as pessoas
         msg = Message(serverName, self.cliAddr, nickname, 'mostrar()', nickname + ' entrou...')
         self.sendMsgToAll(msg)
+        print('dfasdfasdf3')
+        print(msg)
 
         Thread(target=self.receiveData).start()  # espera por mensagem do usuário 
 
@@ -106,13 +110,11 @@ class Chat(Thread):
             if listClients[user_name][1].isLogged:
                 #Se o cliente está logado, envia as mensagens
                 #pickle.dumps() converte uma mensagem string em bytestream
-                print(user_name + ' * ' + str(msg))
                 map(lambda x: listClients[user_name][0].sendto(pickle.dumps(x), listClients[user_name][1].cliAddr), msg)
                 # self.cliCon.sendto(f_string, listClients[user_name][1].cliAddr)
                 # map(lambda x: self.cliCon.sendto(fileObj, user.cliAddr), msg)
             else:
                 #Se o cliente não está logado, acumula as mensagens para enviar quando este logar
-                print(user_name + ' - ' + str(msg))
                 listClients[user_name][1].listMessages += msg
         else : 
             pass # TRATAR ISSO DEPOIS
@@ -129,15 +131,15 @@ class Chat(Thread):
             message = self.cliCon.recv(1024)
             message = pickle.loads(message)
             cmd = message.command
-            print('Cliente escreveu: \n', message.msg)
+            print( message.nickname + ' escreveu: ', message.msg)
 
             if cmd == 'lista()':
                 logged_list = ''
                 keys = list(listClients.keys())
                 for i in range(0, len(listClients)):
                     # gera cada linha da lista a ser enviado ao usuário
-                    logged_list += ('<' + keys[i] + ', ' + listClients[keys[i]][1].cliAddr[0] + ', ' +
-                              listClients[keys[i]][1].cliAddr[0] + '>\n') #Esta é a porta mesmo?
+                    logged_list += ('<' + keys[i] + ', ' + self.cliCon.getsockname[0] + ', ' +
+                              self.cliCon.getsockname[1] + '>\n') #Esta é a porta mesmo?
                 msg = Message(serverName, self.cliAddr, self.nickname, 'mostrar()', logged_list)
                 self.cliCon.sendto(pickle.dumps(msg), self.cliAddr)
 
@@ -174,7 +176,7 @@ class Chat(Thread):
                                   listPrivates[message.nickname], 'mostrar()',
                                   'usuário ' + message.nickname + ' cancelou o privado!')
                     # avisa para o colega que o chat privado foi desconectado, visto que o outro cancelou
-                    self.sendMsg(listPrivates[message.nickname], msg)
+                    self.sendMsg(message.nickname, msg)
                     listPrivates.pop(listPrivates[message.nickname])  # remove o amigo do privado
                     listPrivates.pop(message.nickname)  # remove o mesmo do privado
                 else:
@@ -226,4 +228,4 @@ while 1:
     resp = Access(cliCon, cliAddr, pickle.loads(cliCon.recv(1024)).msg.upper())
     
     if resp.dados != None:
-        Chat(cliCon, cliAddr, resp.dados[0], resp.dados[1] ).start()
+        Chat(cliCon, cliAddr, resp.dados[0]).start()

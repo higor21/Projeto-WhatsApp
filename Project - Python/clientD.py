@@ -4,7 +4,7 @@ from threading import Thread
 import time, pickle
 from classes import *
 
-ip_server = '' # IP of server to connect
+ip_server = '192.168.0.9' # IP of server to connect
 serverPort = 12000 # port to connect
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((ip_server,serverPort))
@@ -12,10 +12,9 @@ clientSocket.connect((ip_server,serverPort))
 def getMessage():
 	while 1:
 		message = clientSocket.recv(1024)
-		print('\n------ Mensagem do servidor ------\n')
-		print (pickle.loads(message))
-		print('\n----------------------------------\n')
-		time.sleep(1) #sleep by 1ms
+		s = '\n------ Mensagem do servidor ------\n' + str(pickle.loads(message))
+		print(s + '\n----------------------------------\n')
+		time.sleep(1)
 
 
 #start here!

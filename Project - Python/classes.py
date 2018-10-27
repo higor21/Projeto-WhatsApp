@@ -15,12 +15,11 @@ class Message:
         return 'message:  ' + self.msg
 
 class User(object):
-    def __init__(self, cliAddr, nickname, senha, isLogged = True, listM = []):
+    def __init__(self, cliAddr, nickname, isLogged = True, listM = []):
         self.nickname = nickname
         self.isLogged = isLogged
         self.cliAddr = cliAddr
         self.listMessages = listM # lista de mensagens do cliente (caso ele acabe de entrar e já tenha mensagens para o mesmo)
-        self.senha = senha 
     
     def __getstate__(self):
         print 'get'
