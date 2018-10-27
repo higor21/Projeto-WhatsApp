@@ -46,6 +46,19 @@ listClients = {}
 # lista de privados
 listPrivates = {}
 
+def serverShell():
+    while (True):
+        cmd = raw_input()
+        if cmd == 'lista()':
+            # imprime a lista de todos os usuários 
+            listAll = map(lambda x: '<' + x + ', ' +  str(listClients[x][0].getsockname()[0]) + ', ' + str(listClients[x][0].getsockname()[1]) + '>' ,listClients.keys())
+            print('\n'.join(list(listAll)))
+        elif cmd == 'sair()':
+            map(lambda x: listClients[x][0].close() ,listClients.keys())
+            #map(lambda x: sendMsgToAll(x[1].nickname + 'saiu!') ,listClients.values())
+            for x in listClients.values():
+                x[1].isLogged = False
+
 # login do usuário
 class Access():
     def __init__(self, cliCon, cliAddr, mode = 'L'):
@@ -126,7 +139,7 @@ class Chat(Thread):
                 self.sendMsg(nmC, msg)
 
     def receiveData(self):
-        while (True):
+        while (listClients[self.nickname][1].isLogged):
             
             message = self.cliCon.recv(1024)
             message = pickle.loads(message)
@@ -217,6 +230,7 @@ class Chat(Thread):
                                      'comando inválido!'))
 
 print('The server has started... \n')
+Thread(target=serverShell).start()
 while 1:
     cliCon, cliAddr = serverSocket.accept()
     
