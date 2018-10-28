@@ -22,11 +22,9 @@ class User(object):
         self.listMessages = listM # lista de mensagens do cliente (caso ele acabe de entrar e já tenha mensagens para o mesmo)
     
     def __getstate__(self):
-        print 'get'
         return self.__dict__
 
     def __setstate__(self, value):
-        print 'set'
         self.__dict__ = value
 
     def __str__(self):

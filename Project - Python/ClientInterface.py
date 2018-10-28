@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ClientDialog.ui'
+# Form implementation generated from reading ui file 'ClientInterface.ui'
 #
 # Created by: PyQt4 UI code generator 4.12.1
 #
@@ -25,9 +25,9 @@ except AttributeError:
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName(_fromUtf8("Dialog"))
-        Dialog.resize(400, 293)
+        Dialog.resize(400, 316)
         self.pushButton = QtGui.QPushButton(Dialog)
-        self.pushButton.setGeometry(QtCore.QRect(310, 260, 41, 25))
+        self.pushButton.setGeometry(QtCore.QRect(300, 270, 41, 25))
         self.pushButton.setObjectName(_fromUtf8("pushButton"))
         self.textEdit = QtGui.QTextEdit(Dialog)
         self.textEdit.setGeometry(QtCore.QRect(40, 150, 341, 91))
@@ -38,21 +38,24 @@ class Ui_Dialog(object):
         self.label_2 = QtGui.QLabel(Dialog)
         self.label_2.setGeometry(QtCore.QRect(20, 130, 81, 17))
         self.label_2.setObjectName(_fromUtf8("label_2"))
-        self.toolButton = QtGui.QToolButton(Dialog)
-        self.toolButton.setGeometry(QtCore.QRect(90, 260, 26, 24))
-        self.toolButton.setObjectName(_fromUtf8("toolButton"))
         self.textBrowser = QtGui.QTextBrowser(Dialog)
         self.textBrowser.setGeometry(QtCore.QRect(40, 30, 341, 101))
         self.textBrowser.setObjectName(_fromUtf8("textBrowser"))
         self.label_3 = QtGui.QLabel(Dialog)
-        self.label_3.setGeometry(QtCore.QRect(20, 260, 67, 17))
+        self.label_3.setGeometry(QtCore.QRect(60, 260, 67, 17))
         self.label_3.setObjectName(_fromUtf8("label_3"))
-        self.toolButton_2 = QtGui.QToolButton(Dialog)
-        self.toolButton_2.setGeometry(QtCore.QRect(220, 260, 26, 24))
-        self.toolButton_2.setObjectName(_fromUtf8("toolButton_2"))
+        self.comboBox = QtGui.QComboBox(Dialog)
+        self.comboBox.setGeometry(QtCore.QRect(50, 280, 86, 25))
+        self.comboBox.setObjectName(_fromUtf8("comboBox"))
+        self.comboBox_2 = QtGui.QComboBox(Dialog)
+        self.comboBox_2.setGeometry(QtCore.QRect(160, 280, 86, 25))
+        self.comboBox_2.setObjectName(_fromUtf8("comboBox_2"))
         self.label_4 = QtGui.QLabel(Dialog)
-        self.label_4.setGeometry(QtCore.QRect(150, 260, 67, 17))
+        self.label_4.setGeometry(QtCore.QRect(170, 260, 67, 17))
         self.label_4.setObjectName(_fromUtf8("label_4"))
+
+        self.comboBox.addAction
+        self.comboBox.showPopup()
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -62,9 +65,7 @@ class Ui_Dialog(object):
         self.pushButton.setText(_translate("Dialog", "ok", None))
         self.label.setText(_translate("Dialog", "Servidor", None))
         self.label_2.setText(_translate("Dialog", "Mensagem", None))
-        self.toolButton.setText(_translate("Dialog", "...", None))
         self.label_3.setText(_translate("Dialog", "nickname", None))
-        self.toolButton_2.setText(_translate("Dialog", "...", None))
         self.label_4.setText(_translate("Dialog", "comando", None))
 
 
