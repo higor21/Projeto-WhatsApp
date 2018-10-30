@@ -9,15 +9,16 @@ class cmd_:
     SAIR = 2
     CG_NOME = 3 # trocar o nome
     RESPOSTA = 4
+    ENVIAR = 5
 
     # comandos do servidor 
-    MOSTRAR = 5 # apenas mostar mensagem na tela do cliente
-    ACESSAR = 6 # pede 'nickname' e 'senha' do usuário 
-    LOG_REG = 7 # solicita resposta de erro, após usuário errar a senha/nickname
-    LOG_CAD = 8 # verifica se o cliente quer fazer o login ou o cadastro
-    REQUISITO = 9 # requisita ao usuário sobre escolha: entrar ou não no privado
+    MOSTRAR = 6 # apenas mostar mensagem na tela do cliente
+    ACESSAR = 7 # pede 'nickname' e 'senha' do usuário 
+    LOG_REG = 8 # solicita resposta de erro, após usuário errar a senha/nickname
+    LOG_CAD = 9 # verifica se o cliente quer fazer o login ou o cadastro
+    REQUISITO = 10 # requisita ao usuário sobre escolha: entrar ou não no privado
 
-    CMD_PADRAO = 10 # não faz nada
+    CMD_PADRAO = 11 # não faz nada
 
 class User(object):
     def __init__(self, cliAddr, nickname, isLogged = True, listM = []):
@@ -50,6 +51,7 @@ class Message:
             self.fromBitstream(bitstream)
             
     def buildBitstream(self):
+        print(self)
         bitstream  = bytes(   [self.length]  )
         bitstream += bytes(   list( map(int, self.ip_src.split('.')) )   )
         bitstream += bytes(   list( map(int, self.ip_dest.split('.')) )   )
