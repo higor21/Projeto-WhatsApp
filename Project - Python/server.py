@@ -95,11 +95,12 @@ class Chat(Thread):
         """Função para administrar o envio de mensagens do Servidor"""
         if type(msg) is not list:  # verifica se há uma lista de mensagens
             msg = [msg]
-        
+        print('---------------')
+        print(msg[0])
+        print('---------------')
         if user_name in listClients :
             if listClients[user_name][1].isLogged:
                 #Se o cliente está logado, envia as mensagens
-                print('dsfa')
                 map(lambda x: listClients[user_name][0].sendto(bytes(x), listClients[user_name][1].cliAddr), msg)
             else:
                 #Se o cliente não está logado, acumula as mensagens para enviar quando este logar
@@ -107,9 +108,11 @@ class Chat(Thread):
 
     def sendMsgToAll(self, msg):
         """Função para enviar mensagens para TODOS os usuários"""
-        for nmC in listClients:
-            if nmC != self.nickname:
-                self.sendMsg(nmC, msg)
+        for x in listClients.keys():
+            print(x)
+            """ if nmC != self.nickname:
+                print('--2--')
+                self.sendMsg(nmC, msg) """
 
     def receiveData(self):
         while (listClients[self.nickname][1].isLogged):
@@ -117,20 +120,20 @@ class Chat(Thread):
             message = Message(bitstream = self.cliCon.recv(1024))
 
             cmd = message.command
-            print( message.nickname + ' escreveu: ', message.msg)
+            if self.nickname not in listPrivates:
+                print( self.nickname + ' escreveu: ', message.msg)
 
             if cmd == cmd_.LISTA:
                 logged_list = ''
                 keys = list(listClients.keys())
                 for i in range(0, len(listClients)):
                     # gera cada linha da lista a ser enviado ao usuário
-                    logged_list += ('<' + keys[i] +', ' + str(self.cliCon.getsockname()[0]) + ', ' +
-                              str(self.cliCon.getsockname()[1]) + '> ' + ('(privado)' if keys[i] in listPrivates else '') + '\n') #Esta é a porta mesmo?
+                    logged_list += ('<' + keys[i] +', ' + str(self.cliCon.getsockname()[0]) + ', ' + str(self.cliCon.getsockname()[1]) + '> ' + ('(privado)' if keys[i] in listPrivates else '') + '\n') #Esta é a porta mesmo?
                 msg = Message(serverName, self.cliAddr[0], self.nickname, cmd_.MOSTRAR, logged_list)
                 self.cliCon.sendto(bytes(msg), self.cliAddr)
 
-            elif cmd.startswith('privado(') and cmd.endswith(')'):  # verifica se o comando é privado(*) M
-                nick = cmd[len('privado('):len(cmd) - 1]
+            elif cmd == cmd_.PRIVADO:  # verifica se o comando é privado(*) M
+                nick = message.nickname
                 # verifica se o 'nickname' existe
                 if nick in listClients:
                     if not listClients[nick][1].isLogged:  # usuário de destinho offline
@@ -139,64 +142,59 @@ class Chat(Thread):
                         msg = 'usuário ' + nick + ' já está no privado com outro usuário!'
                     else:
                         msg = 'solicitação enviada com sucesso!'
-                        self.sendMsg(nick, Message(serverName, listClients[nick][1].cliAddr, self.nickname, 'requisicao()',
-                                                   'usuário ' + self.nickname + ' solicitando privado'))
+                        self.sendMsg(nick, Message(serverName, listClients[nick][1].cliAddr[0], self.nickname, cmd_.REQUISITO, 'usuário ' + self.nickname + ' solicitando privado'))
                     # envia mensagem de volta ao usuário solicitante
-                    self.sendMsg(self.nickname, Message(serverName, self.cliAddr, self.nickname, cmd_.MOSTRAR, msg))
+                    self.sendMsg(self.nickname, Message(serverName, self.cliAddr[0], self.nickname, cmd_.MOSTRAR, msg))
 
             # para este caso, o 'nickname' enviado é o do próprio usuário, visto que ele quer trocar seu próprio nome
-            elif cmd.startswith('nome(') and cmd.endswith(')'):  # verifica se o comando é nome(*)
-                new_nickname = cmd[len('nome('):len(cmd) - 1]  # pega o novo 'nickname'
+            elif cmd == cmd_.CG_NOME:  # verifica se o comando é nome(*)
+                new_nickname = message.nickname # pega o novo 'nickname'
                 msg = self.nickname + ' agora é ' + new_nickname
                 listClients[new_nickname] = listClients.pop(self.nickname)  # trocando o nome do usuário
                 self.nickname = new_nickname
-                self.sendMsgToAll(Message(serverName, listClients[new_nickname][1].cliAddr, new_nickname, cmd_.MOSTRAR, msg))
+                self.sendMsgToAll(Message(serverName, listClients[new_nickname][1].cliAddr[0], new_nickname, cmd_.MOSTRAR, msg))
 
             # para este caso, o 'nickname' enviado é o do próprio usuário, visto que ele quer sair da conversa (privada/chat)
             elif cmd == cmd_.SAIR:
                 if self.nickname in listPrivates:  # verifica se o chat é privado
-                    msg = Message(serverName, listClients[listPrivates[self.nickname]][1].cliAddr,
-                                  listPrivates[self.nickname], cmd_.MOSTRAR,
-                                  'usuário ' + self.nickname + ' cancelou o privado!')
+                    msg = Message(serverName, listClients[listPrivates[self.nickname]][1].cliAddr[0],
+                        listPrivates[self.nickname], cmd_.MOSTRAR,
+                        'usuário ' + self.nickname + ' cancelou o privado!')
                     # avisa para o colega que o chat privado foi desconectado, visto que o outro cancelou
                     self.sendMsg(listPrivates[self.nickname], msg)
                     listPrivates.pop(listPrivates[self.nickname])  # remove o amigo do privado
                     listPrivates.pop(self.nickname)  # remove o mesmo do privado
                 else:
                     listClients[self.nickname][1].isLogged = False
-                    msg = Message(serverName, listClients[self.nickname][1].cliAddr,
-                        self.nickname, cmd_.MOSTRAR, listClients[self.nickname][1].nickname + ' saiu!')
+                    msg = Message(serverName, listClients[self.nickname][1].cliAddr[0], self.nickname, cmd_.MOSTRAR, listClients[self.nickname][1].nickname + ' saiu!')
                     self.sendMsgToAll(msg)
                     listClients[self.nickname][0].close()
                     break  # sai da Thread
             # 'message.nickname' representa para onde quero enviar 
-            elif cmd == 'enviar()':
+            elif cmd == cmd_.ENVIAR:
                 #if message.nickname == listPrivates[self.nickname]:  # verifica se o chat é privado
                 if self.nickname in listPrivates :
-                    self.sendMsg(listPrivates[self.nickname], Message(serverName, listClients[self.nickname][1].cliAddr, listClients[self.nickname][1].nickname, cmd_.MOSTRAR, message.msg))
+                    self.sendMsg(listPrivates[self.nickname], Message(serverName, listClients[self.nickname][1].cliAddr[0], listClients[self.nickname][1].nickname, cmd_.MOSTRAR, message.msg))
                 else:
                     msg = message
                     msg.command = cmd_.MOSTRAR
                     self.sendMsgToAll(msg)
 
-            elif cmd == 'resposta()':
+            elif cmd == cmd_.RESPOSTA:
                 # adicionando a relação entre os usuários
                 if message.msg == 'Y' : 
                     listPrivates[self.nickname] = message.nickname
                     listPrivates[message.nickname] = self.nickname
                     self.sendMsg(self.nickname,
-                        Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, cmd_.MOSTRAR,
-                                'você e ' + message.nickname + ' estão agora no privado'))
+                        Message(serverName, listClients[self.nickname][1].cliAddr[0], self.nickname, cmd_.MOSTRAR, 'você e ' + message.nickname + ' estão agora no privado'))
                     self.sendMsg(message.nickname,
-                        Message(serverName, listClients[message.nickname][1].cliAddr, message.nickname,
-                                cmd_.MOSTRAR, 'você e ' + self.nickname + ' estão agora no privado'))
+                        Message(serverName, listClients[message.nickname][1].cliAddr[0], message.nickname, cmd_.MOSTRAR, 'você e ' + self.nickname + ' estão agora no privado'))
                 else :
                     self.sendMsg(self.nickname,
-                        Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, cmd_.MOSTRAR,
-                            message.nickname + ' não aceitou a solicitação de privado'))
+                        Message(serverName, listClients[self.nickname][1].cliAddr[0], self.nickname, cmd_.MOSTRAR, message.nickname + ' não aceitou a solicitação de privado'))
 
             else:
-                self.sendMsg(self.nickname, Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, cmd_.MOSTRAR,'comando inválido!'))
+                self.sendMsg(self.nickname, Message(serverName, listClients[self.nickname][1].cliAddr[0], self.nickname, cmd_.MOSTRAR,'comando inválido!'))
 
 def login(cliCon, cliAddr):
     cliCon.sendto(bytes(Message(serverName, cliAddr[0], 'nick', cmd_.LOG_CAD, "\nInforme:\n\t* L: login\n\t* C: cadastro\n")), cliAddr)
