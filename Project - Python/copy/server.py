@@ -13,7 +13,7 @@ from threading import Thread
 import pickle, sys, random, time
 from classes import *
 
-serverName = '127.0.0.1'  # Meu IP atual, deve ser verificado sempre
+serverName = ''  # Meu IP atual, deve ser verificado sempre
 serverPort = 12000
 
 serverSocket = socket(AF_INET, SOCK_STREAM)
@@ -29,7 +29,7 @@ listPrivates = {}
 
 def serverShell():
     while (True):
-        cmd = input()
+        cmd = raw_input()
         if cmd == 'lista()':
             # imprime a lista de todos os usuários 
             listAll = map(lambda x: '<' + x +', ' +  str(listClients[x][0].getsockname()[0]) + ', ' + str(listClients[x][0].getsockname()[1]) + '>'  + (' (privado)' if x in listPrivates else '') ,listClients.keys())
@@ -45,8 +45,10 @@ class Access():
     def __init__(self, cliCon, cliAddr, mode = 'L'):
         self.cliCon, self.cliAddr, self.mode = cliCon, cliAddr, mode
         #pede 'nickname' e 'password' do usuário
-        cliCon.sendto(bytes(Message(serverName, cliAddr[0], 'nicknm', cmd_.ACESSAR ,"\nnickname|password: ")), cliAddr)
-        self.dados = Message(bitstream = cliCon.recv(1024)).msg.split('|')
+        msg = Message(serverName, cliAddr, 'nickname', 'access()',"\nnickname|password: ")
+        cliCon.sendto(pickle.dumps(msg), cliAddr)
+        print(msg.command)
+        self.dados = pickle.loads(cliCon.recv(1024)).msg.split('|')
         self.login() if mode == 'L' else self.register() # operador ternário do python
         if self.dados != None:
             listClients[self.dados[0]] = [cliCon, User(self.cliAddr, self.dados[0]), self.dados[1]]
@@ -54,11 +56,12 @@ class Access():
     def login(self):
         if (self.dados[0] not in listClients or listClients[self.dados[0]][2] != self.dados[1]):
             # mensagem informando dados inválidos
-            msg = Message(serverName, cliAddr[0], self.dados[0], cmd_.LOG_REG,"nickname ou password inválido(s)!\n\t* Y: tentar novamente\n\t* N: se cadastrar")
-            self.cliCon.sendto(bytes(msg), self.cliAddr)
-            if Message(bitstream = self.cliCon.recv(1024)).msg.upper() == 'Y':
+            msg = Message(serverName, cliAddr, self.dados[0],
+            'log_reg()',"nickname ou password inválido(s)!\n\t* Y: tentar novamente\n\t* N: se cadastrar")
+            cliCon.sendto(pickle.dumps(msg), self.cliAddr)
+            if pickle.loads(cliCon.recv(1024)).msg.upper() == 'Y':
                 self.__init__(self.cliCon, self.cliAddr, 'L')
-            elif Message(bitstream = self.cliCon.recv(1024)).msg.upper() == 'N':
+            elif pickle.loads(cliCon.recv(1024)).msg.upper() == 'N':
                 self.__init__(self.cliCon, self.cliAddr, 'C')
             return None # não pode logar 
         return self.dados # pode logar 
@@ -66,9 +69,10 @@ class Access():
     def register(self):
         if (self.dados[0] in listClients):
             # mensagem informando dados inválidos
-            msg = Message(serverName, cliAddr[0], self.dados[0], cmd_.LOG_REG ,"nickname já existe!\n\t* Y: tentar novamente\n\t* N: sair")
-            self.cliCon.sendto(bytes(msg), self.cliAddr)
-            if Message(bitstream = self.cliCon.recv(1024)).msg.upper() == 'Y':
+            msg = Message(serverName, cliAddr, self.dados[0],
+            'log_reg()',"nickname já existe!\n\t* Y: tentar novamente\n\t* N: sair")
+            cliCon.sendto(pickle.dumps(msg), self.cliAddr)
+            if pickle.loads(cliCon.recv(1024)).msg.upper() == 'Y':
                 self.__init__(self.cliCon, self.cliAddr, 'C')
             return None # não pode logar 
         return self.dados # pode logar 
@@ -87,7 +91,9 @@ class Chat(Thread):
             time.sleep(0.1)
 
         # avisa que o usuároi 'nickname' entrou para todas as pessoas
-        self.sendMsgToAll(Message(serverName, self.cliAddr[0], nickname, cmd_.MOSTRAR, nickname + ' entrou...'))
+        msg = Message(serverName, self.cliAddr, nickname, 'mostrar()', nickname + ' entrou...')
+        self.sendMsgToAll(msg)
+        print(msg)
 
         Thread(target=self.receiveData).start()  # espera por mensagem do usuário 
 
@@ -99,35 +105,36 @@ class Chat(Thread):
         if user_name in listClients :
             if listClients[user_name][1].isLogged:
                 #Se o cliente está logado, envia as mensagens
-                print('dsfa')
-                map(lambda x: listClients[user_name][0].sendto(bytes(x), listClients[user_name][1].cliAddr), msg)
+                
+                map(lambda x: listClients[user_name][0].sendto(pickle.dumps(x), listClients[user_name][1].cliAddr), msg)
             else:
                 #Se o cliente não está logado, acumula as mensagens para enviar quando este logar
                 listClients[user_name][1].listMessages += msg
 
     def sendMsgToAll(self, msg):
+        print('tA -> ' + str(msg))
         """Função para enviar mensagens para TODOS os usuários"""
         for nmC in listClients:
-            if nmC != self.nickname:
+            if nmC != self.nickname :
                 self.sendMsg(nmC, msg)
 
     def receiveData(self):
         while (listClients[self.nickname][1].isLogged):
             
-            message = Message(bitstream = self.cliCon.recv(1024))
-
+            message = self.cliCon.recv(1024)
+            message = pickle.loads(message)
             cmd = message.command
             print( message.nickname + ' escreveu: ', message.msg)
 
-            if cmd == cmd_.LISTA:
+            if cmd == 'lista()':
                 logged_list = ''
                 keys = list(listClients.keys())
                 for i in range(0, len(listClients)):
                     # gera cada linha da lista a ser enviado ao usuário
                     logged_list += ('<' + keys[i] +', ' + str(self.cliCon.getsockname()[0]) + ', ' +
                               str(self.cliCon.getsockname()[1]) + '> ' + ('(privado)' if keys[i] in listPrivates else '') + '\n') #Esta é a porta mesmo?
-                msg = Message(serverName, self.cliAddr[0], self.nickname, cmd_.MOSTRAR, logged_list)
-                self.cliCon.sendto(bytes(msg), self.cliAddr)
+                msg = Message(serverName, self.cliAddr, self.nickname, 'mostrar()', logged_list)
+                self.cliCon.sendto(pickle.dumps(msg), self.cliAddr)
 
             elif cmd.startswith('privado(') and cmd.endswith(')'):  # verifica se o comando é privado(*) M
                 nick = cmd[len('privado('):len(cmd) - 1]
@@ -142,7 +149,7 @@ class Chat(Thread):
                         self.sendMsg(nick, Message(serverName, listClients[nick][1].cliAddr, self.nickname, 'requisicao()',
                                                    'usuário ' + self.nickname + ' solicitando privado'))
                     # envia mensagem de volta ao usuário solicitante
-                    self.sendMsg(self.nickname, Message(serverName, self.cliAddr, self.nickname, cmd_.MOSTRAR, msg))
+                    self.sendMsg(self.nickname, Message(serverName, self.cliAddr, self.nickname, 'mostrar()', msg))
 
             # para este caso, o 'nickname' enviado é o do próprio usuário, visto que ele quer trocar seu próprio nome
             elif cmd.startswith('nome(') and cmd.endswith(')'):  # verifica se o comando é nome(*)
@@ -150,13 +157,13 @@ class Chat(Thread):
                 msg = self.nickname + ' agora é ' + new_nickname
                 listClients[new_nickname] = listClients.pop(self.nickname)  # trocando o nome do usuário
                 self.nickname = new_nickname
-                self.sendMsgToAll(Message(serverName, listClients[new_nickname][1].cliAddr, new_nickname, cmd_.MOSTRAR, msg))
+                self.sendMsgToAll(Message(serverName, listClients[new_nickname][1].cliAddr, new_nickname, 'mostrar()', msg))
 
             # para este caso, o 'nickname' enviado é o do próprio usuário, visto que ele quer sair da conversa (privada/chat)
-            elif cmd == cmd_.SAIR:
+            elif cmd == 'sair()':
                 if self.nickname in listPrivates:  # verifica se o chat é privado
                     msg = Message(serverName, listClients[listPrivates[self.nickname]][1].cliAddr,
-                                  listPrivates[self.nickname], cmd_.MOSTRAR,
+                                  listPrivates[self.nickname], 'mostrar()',
                                   'usuário ' + self.nickname + ' cancelou o privado!')
                     # avisa para o colega que o chat privado foi desconectado, visto que o outro cancelou
                     self.sendMsg(listPrivates[self.nickname], msg)
@@ -165,7 +172,7 @@ class Chat(Thread):
                 else:
                     listClients[self.nickname][1].isLogged = False
                     msg = Message(serverName, listClients[self.nickname][1].cliAddr,
-                        self.nickname, cmd_.MOSTRAR, listClients[self.nickname][1].nickname + ' saiu!')
+                        self.nickname, 'mostrar()', listClients[self.nickname][1].nickname + ' saiu!')
                     self.sendMsgToAll(msg)
                     listClients[self.nickname][0].close()
                     break  # sai da Thread
@@ -173,10 +180,10 @@ class Chat(Thread):
             elif cmd == 'enviar()':
                 #if message.nickname == listPrivates[self.nickname]:  # verifica se o chat é privado
                 if self.nickname in listPrivates :
-                    self.sendMsg(listPrivates[self.nickname], Message(serverName, listClients[self.nickname][1].cliAddr, listClients[self.nickname][1].nickname, cmd_.MOSTRAR, message.msg))
+                    self.sendMsg(listPrivates[self.nickname], Message(serverName, listClients[self.nickname][1].cliAddr, listClients[self.nickname][1].nickname, 'mostrar()', message.msg))
                 else:
                     msg = message
-                    msg.command = cmd_.MOSTRAR
+                    msg.command = 'mostrar()'
                     self.sendMsgToAll(msg)
 
             elif cmd == 'resposta()':
@@ -185,23 +192,24 @@ class Chat(Thread):
                     listPrivates[self.nickname] = message.nickname
                     listPrivates[message.nickname] = self.nickname
                     self.sendMsg(self.nickname,
-                        Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, cmd_.MOSTRAR,
+                        Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, 'mostrar()',
                                 'você e ' + message.nickname + ' estão agora no privado'))
                     self.sendMsg(message.nickname,
                         Message(serverName, listClients[message.nickname][1].cliAddr, message.nickname,
-                                cmd_.MOSTRAR, 'você e ' + self.nickname + ' estão agora no privado'))
+                                'mostrar()', 'você e ' + self.nickname + ' estão agora no privado'))
                 else :
                     self.sendMsg(self.nickname,
-                        Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, cmd_.MOSTRAR,
+                        Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, 'mostrar()',
                             message.nickname + ' não aceitou a solicitação de privado'))
 
             else:
-                self.sendMsg(self.nickname, Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, cmd_.MOSTRAR,'comando inválido!'))
+                self.sendMsg(self.nickname, Message(serverName, listClients[self.nickname][1].cliAddr, self.nickname, 'mostrar()','comando inválido!'))
 
 def login(cliCon, cliAddr):
-    cliCon.sendto(bytes(Message(serverName, cliAddr[0], 'nick', cmd_.LOG_CAD, "\nInforme:\n\t* L: login\n\t* C: cadastro\n")), cliAddr)
-    
-    resp = Access(cliCon, cliAddr, Message(bitstream = cliCon.recv(1024)).msg.upper())
+    cliCon.sendto(pickle.dumps(Message(serverName, cliAddr, 'nickname', 'log_cad()',
+    "\nInforme:\n\t* L: login\n\t* C: cadastro\n")), cliAddr)
+
+    resp = Access(cliCon, cliAddr, pickle.loads(cliCon.recv(1024)).msg.upper())
     
     if resp.dados != None:
         Chat(cliCon, cliAddr, resp.dados[0]).start()

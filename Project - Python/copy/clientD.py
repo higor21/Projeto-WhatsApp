@@ -3,9 +3,9 @@ from socket import *
 from threading import Thread
 import time, pickle
 from classes import *
-from queue import *
+from Queue import *
 
-ip_server = '127.0.0.1' # IP of server to connect
+ip_server = '10.13.2.75' # IP of server to connect
 serverPort = 12000 # port to connect
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((ip_server,serverPort))
@@ -22,10 +22,9 @@ my_nick = ''
 
 def getMessage():
 	while True:
-		bitStream = clientSocket.recv(1024)
-		message = Message(bitstream = bitStream)
+		message = pickle.loads(clientSocket.recv(1024))
 
-		if message.command != cmd_.MOSTRAR:
+		if message.command != 'mostrar()':
 			listMessages.put(message)
 		else:
 			s = '\n------ Mensagem do servidor ------\n' + str(message.msg)
@@ -36,9 +35,8 @@ def printM():
 	while True: 
 		if not listMessages.empty() and not cmd:
 			ask = listMessages.get()
-			print(ask)
+			print(ask.msg)
 			cmd = True
-			print('aaa')
 
 #start here!
 print ('Client started!\n')
@@ -47,39 +45,36 @@ Thread(target=printM, args=()).start()
 
 while True:
 	cmd = False
-	nick , msg, command = '------', '', cmd_.CMD_PADRAO
-	command = int(cmd_.CMD_PADRAO)
-	answer = input() # espera por um comando
+	nick , msg, command = '', '', ''
+	answer = raw_input() # espera por um comando
 	if cmd:
 		while True:
 			accept = False
-			if ask.command == cmd_.ACESSAR : 
-				if list(answer).count('|') != 1 or answer.startswith('|') or answer.endswith('|') or len(answer.split('|')[0]) > 6:
+			if ask.command == 'access()' : 
+				if list(answer).count('|') != 1 or answer.startswith('|') or answer.endswith('|'):
 					print('nickname ou senha inválidos!\nInforme-os novamente')
 				else :
 					my_nick = answer.split('|')[0] # nickname do usuário
 					msg = answer
 					accept = True
-			elif ask.command == cmd_.LOG_CAD :
-				print('---1')
+			elif ask.command == 'log_cad()':
 				if answer.upper() not in ['C', 'L']:
 					print("Digite um caractere apenas, podendo ser c,C,l,L")
 				else:
 					accept = True
 					msg = answer.upper()
-			elif ask.command == cmd_.LOG_REG or ask.command == 'requisicao()':
+			elif ask.command == 'log_reg()' or ask.command == 'requisicao()':
 				if answer.upper() not in ['Y', 'N']:
 					print("Digite um caractere apenas, podendo ser y,Y,n,N")
 				accept = True
 				msg = answer.upper()
 				nick = ask.nickname
-				command = cmd_.RESPOSTA
+				command = 'resposta()'
 			if not accept:		
-				answer = input(ask.msg)
+				answer = raw_input(ask.msg)
 			else : 
 				break
 	else :
-		print('----')
 		if answer in ['lista()','sair()']:
 			nick = my_nick
 			command = answer
@@ -90,7 +85,6 @@ while True:
 			msg = answer
 			nick = my_nick
 			command = 'enviar()'
-	
-	print(type(command))
-	clientSocket.send(bytes(Message(clientSocket.getsockname()[0],ip_server,nick,command,msg)))
+	print(nick + ' , ' + command + ' , ' + msg)
+	clientSocket.send(pickle.dumps(Message(clientSocket.getsockname(),(ip_server,serverPort),nick,command,msg)))
 	

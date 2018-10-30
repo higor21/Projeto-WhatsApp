@@ -2,22 +2,18 @@
 
 import sys, pickle
 
-class cmd_:
-    # comandos de clientes 
-    LISTA = 0
-    PRIVADO = 1
-    SAIR = 2
-    CG_NOME = 3 # trocar o nome
-    RESPOSTA = 4
 
-    # comandos do servidor 
-    MOSTRAR = 5 # apenas mostar mensagem na tela do cliente
-    ACESSAR = 6 # pede 'nickname' e 'senha' do usuário 
-    LOG_REG = 7 # solicita resposta de erro, após usuário errar a senha/nickname
-    LOG_CAD = 8 # verifica se o cliente quer fazer o login ou o cadastro
-    REQUISITO = 9 # requisita ao usuário sobre escolha: entrar ou não no privado
+class Message_:
+    # construtor
+    def __init__(self, ip_src = '', ip_dest = '', nickname = '', command = '', msg = ''):
+        self.ip_src, self.ip_dest, self.msg  = ip_src, ip_dest, msg
+        self.nickname, self.command = nickname, command
+        self.size = sys.getsizeof(self) # tamanho da mensagem (incluindo a cabeçalho)
 
-    CMD_PADRAO = 10 # não faz nada
+    def __str__(self):
+        # definir melhor depois como será impressa a mensagem ...
+        return 'message:  ' + self.msg
+    
 
 class User(object):
     def __init__(self, cliAddr, nickname, isLogged = True, listM = []):
@@ -42,7 +38,7 @@ class Message:
         self.length   = len(msg)
         self.ip_src  = ip_src
         self.ip_dest  = ip_dest
-        self.nickname = nickname + (6 - len(nickname))*' '
+        self.nickName = nickname
         self.command  = command
         self.msg     = msg
 
@@ -53,11 +49,11 @@ class Message:
         bitstream  = bytes(   [self.length]  )
         bitstream += bytes(   list( map(int, self.ip_src.split('.')) )   )
         bitstream += bytes(   list( map(int, self.ip_dest.split('.')) )   )
-        bitstream += bytes(   self.nickname, 'utf-8')
+        bitstream += bytes(self.nickName,  'utf-8')
         bitstream += bytes(   [self.command]  )
-        bitstream += bytes(   self.msg, 'utf-8')
+        bitstream += bytes(self.msg, 'utf-8')
         return bitstream
-
+        
     def __bytes__(self): # retorna a mensagem transformada em bytes
         return self.buildBitstream()
 
@@ -76,10 +72,10 @@ class Message:
         return ip_tmp
 
     def fromBitstream(self, bitstream):
-        self.length  = int( bitstream[0] )
+        self.length  = int(bitstream[0])
         self.ip_src = self.makeIP_fromBitstream(bitstream[1:5])
         self.ip_dest = self.makeIP_fromBitstream(bitstream[5:9])
-        self.nickname= bitstream[9:15].decode('utf-8')
+        self.nickName= bitstream[9:15].decode('utf-8')
         self.command = int(bitstream[15])
         self.msg    = bitstream[16:].decode('utf-8')
 
@@ -87,7 +83,7 @@ class Message:
         out = 'Tamanho da Menssagem:'  + str(self.length)  + '\n'
         out+= 'Origem(IP):\t' + str(self.ip_src) + '\n'
         out+= 'Destino(IP):\t' + str(self.ip_dest) + '\n'
-        out+= 'Nickname:\t'+ str(self.nickname)+ '\n'
+        out+= 'Nickname:\t'+ str(self.nickName)+ '\n'
         out+= 'Comando:\t' + str(self.command) + '\n'
         out+= 'Mensagem:\t'    + str(self.msg)    + '\n'
         return out
