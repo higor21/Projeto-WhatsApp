@@ -38,7 +38,6 @@ def printM():
 			ask = listMessages.get()
 			print(ask)
 			cmd = True
-			print('aaa')
 
 #start here!
 print ('Client started!\n')
@@ -61,7 +60,6 @@ while True:
 					msg = answer
 					accept = True
 			elif ask.command == cmd_.LOG_CAD :
-				print('---1')
 				if answer.upper() not in ['C', 'L']:
 					print("Digite um caractere apenas, podendo ser c,C,l,L")
 				else:
@@ -79,17 +77,17 @@ while True:
 			else : 
 				break
 	else :
-		print('----')
 		if answer in ['lista()','sair()']:
 			nick = my_nick
-			command = answer
+			command = ( cmd_.LISTA if answer == 'lista()' else cmd_.SAIR )
 		elif (answer.startswith('privado(') and answer.endswith(')')) or (answer.startswith('name(') and answer.endswith(')')):
-			nick = answer[len('privado('): len(answer) - 1] # não precisava
-			command = answer
+			inicio_cmd = (True if answer[0] == 'p' else False)
+			nick = answer[len('privado(' if inicio_cmd else 'name('): len(answer) - 1] # não precisava
+			command = (cmd_.PRIVADO if inicio_cmd else cmd_.CG_NOME)
 		else:
 			msg = answer
 			nick = my_nick
-			command = 'enviar()'
+			command = cmd_.ENVIAR
 	
 	print(type(command))
 	clientSocket.send(bytes(Message(clientSocket.getsockname()[0],ip_server,nick,command,msg)))
