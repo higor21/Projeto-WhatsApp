@@ -6,8 +6,6 @@
     * fazer classe de conversão para bytes
 '''
 
-
-
 from socket import *
 from threading import Thread
 import pickle, sys, random, time
@@ -39,6 +37,13 @@ def serverShell():
             #map(lambda x: sendMsgToAll(x[1].nickname + 'saiu!') ,listClients.values())
             for x in listClients.values():
                 x[1].isLogged = False
+            msg = Message(ip_src = serverName, command = cmd_.SAIR, msg = 'saindo')
+            for nick in listClients.keys():
+                if listClients[nick][1].isLogged:
+                    print('-> ' + nick)
+                    msg.ip_dest = listClients[nick][1].cliAddr[0]
+                    msg.nickname = nick
+                    listClients[nick][0].sendto(bytes(msg), listClients[nick][1].cliAddr)
 
 # login do usuário
 class Access():
@@ -56,11 +61,8 @@ class Access():
             # mensagem informando dados inválidos
             msg = Message(serverName, cliAddr[0], self.dados[0], cmd_.LOG_REG,"nickname ou password inválido(s)!\n\t* Y: tentar novamente\n\t* N: se cadastrar")
             self.cliCon.sendto(bytes(msg), self.cliAddr)
-            if Message(bitstream = self.cliCon.recv(1024)).msg.upper() == 'Y':
-                self.__init__(self.cliCon, self.cliAddr, 'L')
-            elif Message(bitstream = self.cliCon.recv(1024)).msg.upper() == 'N':
-                self.__init__(self.cliCon, self.cliAddr, 'C')
-            return None # não pode logar 
+            resp = Message(bitstream = self.cliCon.recv(1024)).msg.upper()
+            self.__init__(self.cliCon, self.cliAddr, 'L' if resp == 'Y' else 'C')
         return self.dados # pode logar 
 
     def register(self):
@@ -87,6 +89,7 @@ class Chat(Thread):
             time.sleep(0.1)
 
         # avisa que o usuároi 'nickname' entrou para todas as pessoas
+        print(nickname + ' entrou...')
         self.sendMsgToAll(Message(serverName, self.cliAddr[0], nickname, cmd_.MOSTRAR, nickname + ' entrou...'))
 
         Thread(target=self.receiveData).start()  # espera por mensagem do usuário 
@@ -95,24 +98,25 @@ class Chat(Thread):
         """Função para administrar o envio de mensagens do Servidor"""
         if type(msg) is not list:  # verifica se há uma lista de mensagens
             msg = [msg]
-        print('---------------')
-        print(msg[0])
-        print('---------------')
-        if user_name in listClients :
+
+        if user_name in listClients.keys() :
             if listClients[user_name][1].isLogged:
                 #Se o cliente está logado, envia as mensagens
-                map(lambda x: listClients[user_name][0].sendto(bytes(x), listClients[user_name][1].cliAddr), msg)
+                #map(lambda x: listClients[user_name][0].sendto(bytes(x), listClients[user_name][1].cliAddr), msg)
+                for i in range(0, len(msg)):
+                    msg[i].nickname = self.nickname + (6 - len(self.nickname))*' '
+                    listClients[user_name][0].sendto(bytes(msg[i]), listClients[user_name][1].cliAddr)
+
             else:
                 #Se o cliente não está logado, acumula as mensagens para enviar quando este logar
                 listClients[user_name][1].listMessages += msg
 
     def sendMsgToAll(self, msg):
         """Função para enviar mensagens para TODOS os usuários"""
+        print(msg.msg)
         for x in listClients.keys():
-            print(x)
-            """ if nmC != self.nickname:
-                print('--2--')
-                self.sendMsg(nmC, msg) """
+            if x != self.nickname:
+                self.sendMsg(x, msg)
 
     def receiveData(self):
         while (listClients[self.nickname][1].isLogged):
@@ -120,7 +124,7 @@ class Chat(Thread):
             message = Message(bitstream = self.cliCon.recv(1024))
 
             cmd = message.command
-            if self.nickname not in listPrivates:
+            if self.nickname not in listPrivates and message.command == cmd_.ENVIAR: # apenas assim mostra no servidor
                 print( self.nickname + ' escreveu: ', message.msg)
 
             if cmd == cmd_.LISTA:
@@ -212,4 +216,3 @@ while 1:
     
     print('... usuário fazendo login ...')
     Thread(target=login, args=(cliCon, cliAddr)).start()
-    

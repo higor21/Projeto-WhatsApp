@@ -1,3 +1,4 @@
+
 #coding: utf-8
 
 import sys, pickle
@@ -44,6 +45,8 @@ class Message:
         self.ip_src  = ip_src
         self.ip_dest  = ip_dest
         self.nickname = nickname + (6 - len(nickname))*' '
+        if len(self.nickname) != 6:
+            print('VOCÊ É UM OTÁRIO!!!!!!!!!!!!!!!!!!!!!!!!!')
         self.command  = command
         self.msg     = msg
 
@@ -51,7 +54,6 @@ class Message:
             self.fromBitstream(bitstream)
             
     def buildBitstream(self):
-        print(self)
         bitstream  = bytes(   [self.length]  )
         bitstream += bytes(   list( map(int, self.ip_src.split('.')) )   )
         bitstream += bytes(   list( map(int, self.ip_dest.split('.')) )   )

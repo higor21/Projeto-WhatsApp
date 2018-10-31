@@ -4,6 +4,7 @@ from threading import Thread
 import time, pickle
 from classes import *
 from queue import *
+from os import system
 
 ip_server = '127.0.0.1' # IP of server to connect
 serverPort = 12000 # port to connect
@@ -19,25 +20,32 @@ listUserNames = []
 cmd = False
 ask = Message()
 my_nick = ''
+answer = ''
 
 def getMessage():
 	while True:
 		bitStream = clientSocket.recv(1024)
-		message = Message(bitstream = bitStream)
-
-		if message.command != cmd_.MOSTRAR:
-			listMessages.put(message)
-		else:
-			s = '\n------ Mensagem do servidor ------\n' + str(message.msg)
-			print(s + '\n----------------------------------\n')
+		if answer != 'sair()':
+			message = Message(bitstream = bitStream)
+			if message.command != cmd_.MOSTRAR:
+				listMessages.put(message)
+			else:
+				s = 		'\n------ Mensagem ------\n' 
+				s += (message.nickname.replace(' ','') + ' escreveu: ' if message.nickname.replace(' ','') != my_nick.replace(' ','') else '') + str(message.msg)
+				print(s + 	'\n----------------------\n')
+		else :
+			break
 
 def printM():
 	global cmd, ask
 	while True: 
-		if not listMessages.empty() and not cmd:
+		if not listMessages.empty() and not cmd and answer != 'sair()':
 			ask = listMessages.get()
-			print(ask)
+			print(ask.msg)
 			cmd = True
+		elif answer == 'sair()':
+			break
+
 
 #start here!
 print ('Client started!\n')
@@ -48,7 +56,7 @@ while True:
 	cmd = False
 	nick , msg, command = '------', '', cmd_.CMD_PADRAO
 	command = int(cmd_.CMD_PADRAO)
-	answer = input() # espera por um comando
+	answer = input('\n' + my_nick + ': ') # espera por um comando
 	if cmd:
 		while True:
 			accept = False
@@ -65,13 +73,17 @@ while True:
 				else:
 					accept = True
 					msg = answer.upper()
-			elif ask.command == cmd_.LOG_REG or ask.command == 'requisicao()':
+			elif ask.command == cmd_.LOG_REG or ask.command == cmd_.REQUISITO:
 				if answer.upper() not in ['Y', 'N']:
 					print("Digite um caractere apenas, podendo ser y,Y,n,N")
+				else:
+					accept = True
+					msg = answer.upper()
+					nick = ask.nickname
+					command = cmd_.RESPOSTA
+			elif ask.command == cmd_.SAIR:
 				accept = True
-				msg = answer.upper()
-				nick = ask.nickname
-				command = cmd_.RESPOSTA
+				print('-> oi')
 			if not accept:		
 				answer = input(ask.msg)
 			else : 
@@ -80,6 +92,9 @@ while True:
 		if answer in ['lista()','sair()']:
 			nick = my_nick
 			command = ( cmd_.LISTA if answer == 'lista()' else cmd_.SAIR )
+			print(answer)
+			if answer == 'sair()':
+				clientSocket.send(bytes(Message(clientSocket.getsockname()[0],ip_server,nick,command,msg)))
 		elif (answer.startswith('privado(') and answer.endswith(')')) or (answer.startswith('name(') and answer.endswith(')')):
 			inicio_cmd = (True if answer[0] == 'p' else False)
 			nick = answer[len('privado(' if inicio_cmd else 'name('): len(answer) - 1] # não precisava
@@ -89,6 +104,9 @@ while True:
 			nick = my_nick
 			command = cmd_.ENVIAR
 	
-	print(type(command))
-	clientSocket.send(bytes(Message(clientSocket.getsockname()[0],ip_server,nick,command,msg)))
-	
+	if ask.command != cmd_.SAIR and command != cmd_.SAIR:
+		clientSocket.send(bytes(Message(clientSocket.getsockname()[0],ip_server,nick,command,msg)))
+	else :
+		system('clear')
+		print('\n\nvocê optou por sair!\nVolte sempre ...')
+		break
