@@ -1,4 +1,3 @@
-
 #coding: utf-8
 
 import sys, pickle
@@ -18,8 +17,10 @@ class cmd_:
     LOG_REG = 8 # solicita resposta de erro, após usuário errar a senha/nickname
     LOG_CAD = 9 # verifica se o cliente quer fazer o login ou o cadastro
     REQUISITO = 10 # requisita ao usuário sobre escolha: entrar ou não no privado
+    ATUALIZAR = 11 # avisa o usuário para atualizar sua lista de usuários
+    LISTA_USERS = 12 # informa ao cliente que está o enviando a lista de usuários 
 
-    CMD_PADRAO = 11 # não faz nada
+    CMD_PADRAO = 13 # não faz nada
 
 class User(object):
     def __init__(self, cliAddr, nickname, isLogged = True, listM = []):
@@ -45,8 +46,6 @@ class Message:
         self.ip_src  = ip_src
         self.ip_dest  = ip_dest
         self.nickname = nickname + (6 - len(nickname))*' '
-        if len(self.nickname) != 6:
-            print('VOCÊ É UM OTÁRIO!!!!!!!!!!!!!!!!!!!!!!!!!')
         self.command  = command
         self.msg     = msg
 

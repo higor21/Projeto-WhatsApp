@@ -24,10 +24,10 @@ except AttributeError:
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
-        Dialog.setObjectName(_fromUtf8("Dialog"))
-        Dialog.resize(400, 316)
+        Dialog.setObjectName(_fromUtf8("ChatApp"))
+        Dialog.resize(400, 284)
         self.pushButton = QtGui.QPushButton(Dialog)
-        self.pushButton.setGeometry(QtCore.QRect(300, 270, 41, 25))
+        self.pushButton.setGeometry(QtCore.QRect(320, 250, 61, 25))
         self.pushButton.setObjectName(_fromUtf8("pushButton"))
         self.textEdit = QtGui.QTextEdit(Dialog)
         self.textEdit.setGeometry(QtCore.QRect(40, 150, 341, 91))
@@ -36,37 +36,20 @@ class Ui_Dialog(object):
         self.label.setGeometry(QtCore.QRect(20, 10, 67, 17))
         self.label.setObjectName(_fromUtf8("label"))
         self.label_2 = QtGui.QLabel(Dialog)
-        self.label_2.setGeometry(QtCore.QRect(20, 130, 81, 17))
+        self.label_2.setGeometry(QtCore.QRect(20, 130, 151, 17))
         self.label_2.setObjectName(_fromUtf8("label_2"))
-        self.textBrowser = QtGui.QTextBrowser(Dialog)
-        self.textBrowser.setGeometry(QtCore.QRect(40, 30, 341, 101))
-        self.textBrowser.setObjectName(_fromUtf8("textBrowser"))
-        self.label_3 = QtGui.QLabel(Dialog)
-        self.label_3.setGeometry(QtCore.QRect(60, 260, 67, 17))
-        self.label_3.setObjectName(_fromUtf8("label_3"))
-        self.comboBox = QtGui.QComboBox(Dialog)
-        self.comboBox.setGeometry(QtCore.QRect(50, 280, 86, 25))
-        self.comboBox.setObjectName(_fromUtf8("comboBox"))
-        self.comboBox_2 = QtGui.QComboBox(Dialog)
-        self.comboBox_2.setGeometry(QtCore.QRect(160, 280, 86, 25))
-        self.comboBox_2.setObjectName(_fromUtf8("comboBox_2"))
-        self.label_4 = QtGui.QLabel(Dialog)
-        self.label_4.setGeometry(QtCore.QRect(170, 260, 67, 17))
-        self.label_4.setObjectName(_fromUtf8("label_4"))
-
-        self.comboBox.addAction
-        self.comboBox.showPopup()
+        self.textEdit_2 = QtGui.QTextEdit(Dialog)
+        self.textEdit_2.setGeometry(QtCore.QRect(40, 30, 341, 91))
+        self.textEdit_2.setObjectName(_fromUtf8("textEdit_2"))
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog", None))
-        self.pushButton.setText(_translate("Dialog", "ok", None))
-        self.label.setText(_translate("Dialog", "Servidor", None))
-        self.label_2.setText(_translate("Dialog", "Mensagem", None))
-        self.label_3.setText(_translate("Dialog", "nickname", None))
-        self.label_4.setText(_translate("Dialog", "comando", None))
+        Dialog.setWindowTitle(_translate("ChatApp", "ChatApp", None))
+        self.pushButton.setText(_translate("ChatApp", "enviar", None))
+        self.label.setText(_translate("ChatApp", "Servidor:", None))
+        self.label_2.setText(_translate("ChatApp", "Mensagem/Comando:", None))
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from socket import *
 from threading import Thread
 import pickle, sys, random, time
 from classes import *
+from functools import reduce
 
 serverName = '127.0.0.1'  # Meu IP atual, deve ser verificado sempre
 serverPort = 12000
@@ -52,8 +53,10 @@ class Access():
         #pede 'nickname' e 'password' do usuário
         cliCon.sendto(bytes(Message(serverName, cliAddr[0], 'nicknm', cmd_.ACESSAR ,"\nnickname|password: ")), cliAddr)
         self.dados = Message(bitstream = cliCon.recv(1024)).msg.split('|')
+        self.dados[0] += (6 - len(self.dados[0]))*' '
         self.login() if mode == 'L' else self.register() # operador ternário do python
         if self.dados != None:
+            self.dados[0] += (6 - len(self.dados[0]))*' '
             listClients[self.dados[0]] = [cliCon, User(self.cliAddr, self.dados[0]), self.dados[1]]
 
     def login(self):
@@ -89,11 +92,13 @@ class Chat(Thread):
             time.sleep(0.1)
 
         # avisa que o usuároi 'nickname' entrou para todas as pessoas
-        print(nickname + ' entrou...')
-        self.sendMsgToAll(Message(serverName, self.cliAddr[0], nickname, cmd_.MOSTRAR, nickname + ' entrou...'))
+        self.sendMsgToAll(Message(serverName, self.cliAddr[0], nickname, cmd_.ATUALIZAR, 'eu entrei...'))
+
+        msg = Message(serverName,listClients[self.nickname][1].cliAddr[0], self.nickname, cmd_.LISTA_USERS, reduce(lambda x,y: x + ';' + y ,listClients.keys()))
+        self.sendMsg(self.nickname, msg)
 
         Thread(target=self.receiveData).start()  # espera por mensagem do usuário 
-
+    
     def sendMsg(self, user_name, msg):
         """Função para administrar o envio de mensagens do Servidor"""
         if type(msg) is not list:  # verifica se há uma lista de mensagens
@@ -113,9 +118,8 @@ class Chat(Thread):
 
     def sendMsgToAll(self, msg):
         """Função para enviar mensagens para TODOS os usuários"""
-        print(msg.msg)
         for x in listClients.keys():
-            if x != self.nickname:
+            if x != self.nickname and x not in listPrivates.keys():
                 self.sendMsg(x, msg)
 
     def receiveData(self):
@@ -152,11 +156,12 @@ class Chat(Thread):
 
             # para este caso, o 'nickname' enviado é o do próprio usuário, visto que ele quer trocar seu próprio nome
             elif cmd == cmd_.CG_NOME:  # verifica se o comando é nome(*)
-                new_nickname = message.nickname # pega o novo 'nickname'
-                msg = self.nickname + ' agora é ' + new_nickname
-                listClients[new_nickname] = listClients.pop(self.nickname)  # trocando o nome do usuário
-                self.nickname = new_nickname
-                self.sendMsgToAll(Message(serverName, listClients[new_nickname][1].cliAddr[0], new_nickname, cmd_.MOSTRAR, msg))
+                if message.nickname not in listClients.keys():
+                    new_nickname = message.nickname # pega o novo 'nickname'
+                    msg = self.nickname + ' agora é ' + new_nickname
+                    listClients[new_nickname] = listClients.pop(self.nickname)  # trocando o nome do usuário
+                    self.nickname = new_nickname
+                    self.sendMsgToAll(Message(serverName, listClients[new_nickname][1].cliAddr[0], new_nickname, cmd_.MOSTRAR, msg))
 
             # para este caso, o 'nickname' enviado é o do próprio usuário, visto que ele quer sair da conversa (privada/chat)
             elif cmd == cmd_.SAIR:

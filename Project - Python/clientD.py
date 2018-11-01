@@ -21,18 +21,28 @@ cmd = False
 ask = Message()
 my_nick = ''
 answer = ''
+isPrivate = False
 
 def getMessage():
+	global listUserNames
 	while True:
 		bitStream = clientSocket.recv(1024)
 		if answer != 'sair()':
 			message = Message(bitstream = bitStream)
-			if message.command != cmd_.MOSTRAR:
-				listMessages.put(message)
+
+			# print('-> ' + str(ask.command) + ' : ' + ask.nickname)
+			
+			if message.command == cmd_.ATUALIZAR and message.nickname not in listUserNames:
+				listUserNames.append(message.nickname)
+
+			if message.command == cmd_.LISTA_USERS:
+				listUserNames = list(message.msg.split(';'))
+
 			else:
-				s = 		'\n------ Mensagem ------\n' 
-				s += (message.nickname.replace(' ','') + ' escreveu: ' if message.nickname.replace(' ','') != my_nick.replace(' ','') else '') + str(message.msg)
-				print(s + 	'\n----------------------\n')
+				if message.command not in [cmd_.MOSTRAR, cmd_.ATUALIZAR]:
+					listMessages.put(message)
+				else:
+					print('\n' + (message.nickname.replace(' ','') + ' escreveu: ' if message.nickname.replace(' ','') != my_nick.replace(' ','') else '') + str(message.msg) + '\n')
 		else :
 			break
 
@@ -56,7 +66,7 @@ while True:
 	cmd = False
 	nick , msg, command = '------', '', cmd_.CMD_PADRAO
 	command = int(cmd_.CMD_PADRAO)
-	answer = input('\n' + my_nick + ': ') # espera por um comando
+	answer = input('\n' + my_nick + (': ' if my_nick != '' else '')) # espera por um comando
 	if cmd:
 		while True:
 			accept = False
@@ -83,7 +93,7 @@ while True:
 					command = cmd_.RESPOSTA
 			elif ask.command == cmd_.SAIR:
 				accept = True
-				print('-> oi')
+
 			if not accept:		
 				answer = input(ask.msg)
 			else : 
@@ -92,21 +102,31 @@ while True:
 		if answer in ['lista()','sair()']:
 			nick = my_nick
 			command = ( cmd_.LISTA if answer == 'lista()' else cmd_.SAIR )
-			print(answer)
 			if answer == 'sair()':
 				clientSocket.send(bytes(Message(clientSocket.getsockname()[0],ip_server,nick,command,msg)))
-		elif (answer.startswith('privado(') and answer.endswith(')')) or (answer.startswith('name(') and answer.endswith(')')):
+		elif (answer.startswith('privado(') and answer.endswith(')')) or (answer.startswith('nome(') and answer.endswith(')')):
 			inicio_cmd = (True if answer[0] == 'p' else False)
-			nick = answer[len('privado(' if inicio_cmd else 'name('): len(answer) - 1] # não precisava
-			command = (cmd_.PRIVADO if inicio_cmd else cmd_.CG_NOME)
+			nick = answer[len('privado(' if inicio_cmd else 'nome('): len(answer) - 1] 
+			nick = (nick + (6 - len(nick))*' ')
+			if nick != my_nick:
+				if ((nick in listUserNames) if inicio_cmd else (nick not in listUserNames)):
+					my_nick = (my_nick if inicio_cmd else nick)
+					command = (cmd_.PRIVADO if inicio_cmd else cmd_.CG_NOME)
+					isPrivate = inicio_cmd
+				else:
+					print('\n' + ('Não' if inicio_cmd else 'Já') + ' existe usuários com este nome')
+					continue
+			else:
+				print('\n ' + nick + ' é seu nome, digite outro nome \n')
+				continue
 		else:
 			msg = answer
 			nick = my_nick
 			command = cmd_.ENVIAR
 	
-	if ask.command != cmd_.SAIR and command != cmd_.SAIR:
-		clientSocket.send(bytes(Message(clientSocket.getsockname()[0],ip_server,nick,command,msg)))
-	else :
+	if ask.command == cmd_.SAIR or (command == cmd_.SAIR and not isPrivate):
 		system('clear')
-		print('\n\nvocê optou por sair!\nVolte sempre ...')
+		print('\n\nvocê optou por sair!')
 		break
+
+	clientSocket.send(bytes(Message(clientSocket.getsockname()[0],ip_server,nick,command,msg)))
